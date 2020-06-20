@@ -1,0 +1,111 @@
+---
+title: "Analysis of Online Shopping Data"
+author: "Kultigin Bozdemir"
+date: "3/31/2020"
+output:
+  pdf_document: default
+  html_document: default
+bibliography: bibliography.bib
+---
+
+
+## Introduction
+A data data set about online shopping is provided the by the lecturer for the class practices. In the following sections, basic statistical concepts and R tool will be used to analyze the mentioned data.
+
+## Setting the Environment
+
+As the reader would notice, R environment is used to analyze the data. Furthermore, R Markdown has been choosen to present the analysis along with the relevant R codes. First step is to set up the directory and to load the tidyverse library which is a must for R analysis. 
+
+```{r root_setup}
+knitr::opts_knit$set(root.dir = getwd())
+```
+
+```{r}
+library(tidyverse)
+getwd()
+```
+
+## Exploration and the Transformation of the Data
+
+The following code imports the data into R. And it immediately will be transformed into a data frame, whose first rows are below printed. 
+
+```{r}
+df<-read.delim2("iw_customer.txt")
+head(df)
+```
+
+However, calling a  summary function is usually necessary to figure out the general structure and content of the data. From those two pieces of analysis, it is assessed that many of columns are to be excluded for further analysis for the sake of simplicity. 
+
+```{r}
+summary(df)
+```
+
+The following code drops those columns. It is necessary to keep anonymous information to drive some conclusions to improve the business, whereas the individual information is discarded such as names, email addresses etc. However, the birtdate is kept because it will be soon transformed into "age" information which might be useful for future analysis.
+```{r}
+drops <- c("riskID","eMail", "newsletter",  "owner",
+           "creditLimit", "street","firstname","surname", "owner","customerNo")
+df<-df[ , !(names(df) %in% drops)]
+```
+
+Now, the "age" column is created from the "birthdate" and present time information. The age  is roughly calculated by dividing the total days by 365 for the sake of the simplicity.  However, one final adjusment has to made to improve it. "salution" column needs to be transformed into "gender" column. Then finally, the  shrunken version of the data is printed again.
+
+```{r}
+df$birthdate<-as.Date(df$birthdate)
+df$age<- as.integer((Sys.Date()-df$birthdate)/365) 
+df$gender<-ifelse ( df$salutation=="Frau", "Female", "Male" )
+df$gender<-as.factor(df$gender)
+drops <- c("salutation", "birthdate")
+df<-df[ , !(names(df) %in% drops)]
+head(df)
+```
+
+Now, some basic business questions can be answered from this dataframe, such as;
+1. Is there any correlation between age and credit?
+2. Which age group or gender consumes more in which city?
+3. Which region is promising more? (from postal code)
+
+## Descriptive Analysis
+The anwering the questions which are given above can be defined in statistical descriptive analysis, although they are here a few of many business questions.
+
+The following code yields the correlation result, which shows a slight or weak correlation between "age" and "credit". 
+```{r}
+library(ggpubr)
+corr<-cor(df$age,df$credit)
+print(corr)
+```
+The initial number of postcodes identifies the regions in Germany. [@postcodes]
+The shopping numbers of each region are seen below. Number 4, which covers mostly NRW is busiest region in Germany.
+
+```{r}
+table(substr(df$postcode,1,1))
+```
+
+
+To see the number of shoppings per city, summary function can be used for the city column, instead of plotting all cities that would give less information due to large number of cities in germany besides the size of the data. Most promising 5 cities are printed below followed by the lesast ones.
+```{r}
+summary(df$city)[1:5]
+```
+
+City Herford, which has a small shopping numbers has been selected to plot the number of transactions since plotting large cities gives less information due to the comlexity. On the x axis, the postal neigbourhoods , on the y axis the ages are plotted, while the colors are representing the gender thanks to ggplot library. A conclusion from the plot can be driven that there is no male customer in 32051 postal zone. Similarly, there are elderly customers (above 65) in zone 32049.
+
+```{r}
+#Herford
+herford<-subset(df, df$city=="Herford")
+gg<-ggplot(herford, aes(x=postcode, y=age, color=gender)) +
+        geom_point() + labs(title="Herford Scatterplot", x="Postcode", y="age") 
+gg+theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+ Next, the credit dimension is printed in the same plot instead of gender in the plot below. The plot shows, most of customers have less credit limits in this city. 
+```{r}
+gg<-ggplot(herford, aes(x=postcode, y=age, alpha=1, color=credit)) +
+        geom_point() + labs(title="Herford Scatterplot", x="Postcode", y="age") 
+gg+theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+Some important decisions can be made on the information derived from the plots above, which are asked at he beginning this section. For example which gender and which age group are living in which part of the city. Therefore, the products can be customized accordingly. 
+
+## Conclusion
+
+In this assignment, some of basic methods in R have been used in R Markdown to show the results accompanied with corresponding R codes. Some of very basic business questions have been answered in the text. Those are mainly the age, credit and gender profile of customers in different regions, cities or city zones. Such kind of analysis help the desion making process to improve the profitability of the business.
+
+## Bibliography
