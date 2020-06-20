@@ -132,13 +132,20 @@ colnames(agg)<-(c("product_group","mean_price"))
 gg<-ggplot(agg, aes(x=product_group, y=mean_price)) + 
   geom_point() + labs(title="product group~ mean price Scatterplot", x="Product group", y="mean price") 
 gg+theme(axis.text.x = element_text(angle = 90, hjust = 1))
+# It seems that there is no a correlation between price and product group.
+# But it seems that there can ve clusters. 
+
+
 
 #Size
-unique(factor(df$size))
+# is there any correlation between size and price. 
+# extract only letter sizes ; XS, S, ....XXL
 ls=sort(levels(df$size))
 ls
 size_with_letter=ls[336:348]
 sort(table(df$size))
+
+# let is aggregate and find the meann of sizes of XS,.... XXL
 prices=list()
 for (i in size_with_letter){
   p=mean(as.integer(df$unitPrice[df$size==i]))
@@ -146,12 +153,13 @@ for (i in size_with_letter){
   cat("size:",i, "=", p)
   print("......")
 }
+#put the values in a df
 price_size_df= data.frame(prices=as.integer(prices), size=size_with_letter)
+#plot
 gg<-ggplot(price_size_df, aes(x=size, y=prices)) + 
   geom_point() + labs(title="size~ price Scatterplot", x="size", y="price") 
 gg+theme(axis.text.x = element_text(angle = 90, hjust = 1))
-
-head(df)
+ # it seems there is no clear correlation. it is clear one size is very expensive.
 
 
 
